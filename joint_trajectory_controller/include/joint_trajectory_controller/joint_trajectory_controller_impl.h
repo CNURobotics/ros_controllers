@@ -419,6 +419,12 @@ update(const ros::Time& time, const ros::Duration& period)
           }
           rt_segment_goal->preallocated_result_->error_code =
           control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+
+          // If we violate path tolerance then hold current position and return error
+          // This either sets current joint position or current desired position based on the
+          // stop_trajectory_duration_ parameter
+          setHoldPosition(time_data.uptime, rt_active_goal_);
+
           rt_segment_goal->setAborted(rt_segment_goal->preallocated_result_);
           rt_active_goal_.reset();
           successful_joint_traj_.reset();
@@ -705,7 +711,7 @@ queryStateService(control_msgs::QueryTrajectoryState::Request&  req,
     response_point.velocity[i]     = state.velocity[0];
     response_point.acceleration[i] = state.acceleration[0];
   }
-  
+
   // Populate response
   resp.name         = joint_names_;
   resp.position     = response_point.position;
